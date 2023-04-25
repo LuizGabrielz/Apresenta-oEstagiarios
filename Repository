@@ -1,0 +1,172 @@
+Na pasta Data nós criamos uma folder chamada Repository
+Dentro do Repository criamos uma classe chamada AlunoRepository e vai herdar a interface IAlunoRepository
+
+namespace Data.Repositories
+{
+  public class AlunoRepository : IAlunoRepository
+  {
+    private readonly ApplicationDbContext _dbContext;
+
+    public AlunoRepository(ApplicationDbContext dbContext)
+    {
+      _dbContext = dbContext;
+    }
+  }
+}
+
+Vai pegar o Application DbContext, vai colocar uma variável privada, vai passar essa variável privada para dentro do construtor e vai fazer essa variável privada receber o contexto que a gente vai passar e esse contexto vai vim do Application DbContext.
+E ele vai precisar de uma interface para a gente poder ditar as regras do que vai acontecer
+
+E no usuario controller nos mudamos a variavel privada para Interfaces com o seguinte código abaixo:
+
+namespace web.Controllers;
+
+public class UsuarioController  : Controller
+{
+  private readonly IAlunoRepository _alunoRepostitory;
+
+  public UsuarioController(IAlunoRepository alunoRepository)
+  {
+    _alunoRepository = alunoRepository;
+  }
+
+  public IActionResult Index() => View ();
+}
+
+Depois nós vamos criar um método no AlunoRepository: 
+
+namespace Data.Repositories
+{
+  public class AlunoRepository : IAlunoRepository
+  {
+    private readonly ApplicationDbContext _dbContext;
+
+    public AlunoRepository(ApplicationDbContext dbContext)
+    {
+      _dbContext = dbContext;
+    }
+
+      public async Task<IEnumerable<Aluno>> BuscarAlunos()
+      {
+        return await _dbContext.Alunos.ToListAsync();
+      }
+  }
+}
+Esse método tem um Task que é uma tarefa que vai ser feita, onde nós estamos chamando um IEnumerable de aluno e a gente vai chamar de "buscar alunos"
+E o que vai ser o retorno desse método? pq todo Task tem que ter um retorno (o await é pq é uma tarefa assincrona) então a gente vai esperar ele passar do DbContext, vai chamar um aluno e vai passar um ToList Async
+
+E lá em AlunoRepository nós vamos passar o método que nós criamos no Repository com o código abaixo:
+namespace web.Controllers;
+
+public class UsuarioController  : Controller
+{
+  private readonly IAlunoRepository _alunoRepostitory;
+
+  public UsuarioController(IAlunoRepository alunoRepository)
+  {
+    _alunoRepository = alunoRepository;
+  }
+
+  public IActionResult Index() => View (_alunoRepository.BuscarAlunos()); Esse foi o método que nós criamos! 
+}
+
+"Colocar os Repositorys no global using para ele ser usado" 
+No Application DbContext nós colocamos o DbSet de alunos e usuarios para eles serem chamados com o código abaixo:
+namespace Data;
+
+public class Application DbContext : BaseDbContext
+{
+  public ApplicationDbContext(AppSettings appSettings) : base(appSettings, "Application")
+  {
+
+  }
+
+  public DbSet<Usuario> Usuarios { get; set; }
+
+  public DbSet<Aluno> Alunos { get; set }
+}
+
+Dessa forma eu consigo usar ela agr no AlunoRepository mas aqui eu não to retornando mais na view, eu to retornando no método BuscarAlunos
+E la na view do UsuarioController simplismente eu to chamando agr o AlunoRepository.BuscarAlunos(); com o código abaixo: 
+
+namespace web.Controllers;
+
+public class UsuarioController : Controller
+{
+  private readonly AlunoRepository _alunoRepository;
+
+  public UsuarioController(AlunoRepository alunoRepository)
+  {
+    _alunoRepository = alunoRepository;
+  }
+
+  public IActionResult Index() => View(_alunoRepository.BuscarAlunos());
+}
+Ele esta puxando o método BuscarAlunos, assim a view fica muito mais limpa, não vou ter mais regras no meu Controller mais. 
+
+E la na view o código pra aparecer fica assim:
+@model IEnumerable<Aluno>
+@foreach (var item is model)
+{
+  <div>
+      @item.Nome
+    </div>
+}
+
+A view fica assim!
+
+Agora nós precisamos colocar uma injeção de dependencia no nosso código no DependencyIjection.cs com o seguinte código abaixo:
+
+namespace web.Configurations;
+
+public static class DependencyInjection
+{
+  public static void AddDependencies(this IServiceCollections services, AppSettings appSettings)
+  {
+    services.AddSingleton(appSettings);
+
+    services.AddScoped<ApplicationDbContext>();
+  
+    services.AddScoped<AlunoRepository>();
+  }
+} Injeção de dependencia pra fazer funcionar! 
+
+As interfaces ficam no Core e faz tambem a pasta Base e dentro terá a BaseRepository para não dar erro com o seguinte código:
+
+namespace Core.Interfaces.Base
+{
+  public Interface IBaseRepository
+  {
+    Task<IDbTransaction> BeginTransactionAsync();
+
+    IDbTransaction BeginTransaction();
+  }
+}
+
+A interface fica no Core e dentro dessa pasta vamos colocar outra pasta com o nome repositories e dentro de interfaces repositories a gente cria o IAlunoRepository
+com o seguinte código:
+
+namespace Core.Interfaces.Repositories;
+
+public interfaces IAlunoRepository
+{
+      IEnumerable<Aluno> BuscarAlunos();
+}
+
+O IAlunoRepositorie precisa usar o método BuscarAlunos()
+E coloca o global using de <Aluno>
+
+namespace Data.Repositories
+{
+  public class AlunoRepository : IAlunoRepository
+  {
+    private readonly ApplicationDbContext _dbContext;
+
+    public AlunoRepository(ApplicationDbContext dbContext)
+    {
+      _dbContext = dbContext;
+    }
+  
+    public IEnumerable<Aluno> BuscarAlunos() => _dbContext.Alunos.ToList().Where(x => x.Id == 2);
+  }
+} 

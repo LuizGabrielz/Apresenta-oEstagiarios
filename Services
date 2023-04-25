@@ -1,0 +1,35 @@
+No Service nós vamos passar o própio Repository com dependencias pra ele.
+As interfaces ficam na pasta Core, crie uma pasta pra eles com o nome Services. Basicamente ele vai ser o chefão que vai ditar as regras do negócio
+Nesse service aqui nós vamos criar um service de usuario
+Criando um file com o nome UsuarioService.cs com o seguinte código:
+
+namespace Core.Services;
+
+public class UsuarioService : IUsuarioService
+{
+    private readonly IAlunoRepository _alunoRepository;
+
+    public UusuarioService(IAlunoRepository alunoRepository)
+    {
+        _alunoRepository = alunoRepository;
+    }
+
+    public async Task<IEnumerable<Aluno>> BuscarAluno() => await _alunoRepository BuscarAluno();
+}
+
+Nesse códig um usuarioService esta chamando um Repository de aluno, que é o Repository que a gente quer usar.
+Explicação do código: nele nós estamos chamando o repositorio de aluno na interface IAlunoRepository e ele ta fazendo uma leitura privada do _dbContext
+
+Dentro da pasta core criamos uma pasta interfaces, dentro dela criamos uma pasta Repositories e dentro dela temos o IAlunoRepository.cs com o seguinte código abaixo:
+
+namespace Core.Interfaces.Services;
+
+public interfaces IAlunoRepository
+{
+    Task <IEnumerable<Aluno>> BuscarAlunos();
+}
+Agora essa interface IAlunoRepository ela vai trazer uma Task de IEnumerable 
+
+Agora que nós fizemos isso, precisamos ir na injeção de dependencias que fica la no web e digitar o seguinte código:
+
+services.AddScoped<IUsuarioService>(); 

@@ -1,0 +1,109 @@
+create table usuario (
+    id Int generated always as identity,
+    apelido varchar(64) NOT NULL,
+    email varchar(256) NOT NULL,
+    senha varchar(8) NOT NULL,
+    data_cadastro timestamp NOT NULL,
+    constraint pk_usuario primary key (id)
+
+);  
+
+Depois criar um model com a tabela de usuario ( o model fica no Core)
+
+Criando o Model de usuário:
+namespace core.Models;
+public class Usuario 
+{
+    public int Id { get; set; }
+    public string Apelido { get; set; }
+    public string email { get; set; }
+    public string senha { get; set; }
+    public DateTime DataCadastro { get; set; }
+
+    builder.HasOne(x => x.Usuario).WithMany(x => x.Alunos).HasForeignKey(x => x.IdUsuario);
+}
+Se essa tabela tiver associação, devemos colocar o Id de outra tabela como atributo, por exemplo: IdUsuario { get; set; } E tb colocar o seguinte código: public Usuario Usuario { get; set; 
+E no outro lado, colocamos um IEnumerable pra dizer que são muitos
+}
+Modelando a tabela de Usuarios com esse código
+
+Para fazer o Mapeamento nós vamos entrar no Data, na pasta configuration/application e dentro vc cria uma classe "UsuarioConfiguration.cs" e digita o seguinte código:
+using Core.Models;
+using Microsoft.EntityFrameworkCore.Metodata.Builders;
+
+namespace Data.configuration.Application;
+
+public class UsuarioConfiguration : IEntityTypeConfiguration<usuario>
+{
+    public void Configure(EntityTypeBuilder<Usuario> builder) Isso é uma ação do EntityFrameworkCore, é como se ele estivesse construindo um banco de dados la
+    {
+        builder.ToTable("usuario", "dbo");
+
+        builder.HasKey(x => x.Id).HasName("pk_usuario");
+
+        builder.Property(x => x.Id).ValueGeneratedOnAdd().HasColumn("id");
+        builder.Property(x => x.Apelido).HasColumnName("apelido");
+        builder.Property(x => x.Email).HasColumnName("email");
+        builder.Property(x => x.Senha).HasColumnName("senha");
+        builder.Property(x => x.DataCadastro).HasColumnName("data_cadastro");
+    }
+}
+Agora ele ta puxando a classe Usuario la no model.
+Estamos definindo os valores reais que colocamos no PgAdmin.
+Agora nós estamos conectados com o banco de dados.
+Para testar essa conexão o correto é criar um repository e dentro desse repository vc criar a conexão com o banco e depois vc chama isso no Controller.
+
+Fazendo uma view nova 
+vamos fazer uma view do usuario, criamos uma nova pasta dentro da pasta "views" com o nome "usuario" dentro da pasta vc tem uma Action, ou seja uma ação. Colocar index.cshtml. Ou seja, ele vai fazer uma ação de renderizar uma página indexcshtml e esse ato se chama view, basicamente
+Dentro do Controller dessa view a gente encaminha uma ação pra renderizar a view
+
+No controller a gente vai criar um novo controller e tem que ser com o nome da view, que vai ser UsuarioController.cs
+O Controller vai ter esse código: 
+
+namespace web.Controllers;
+
+public class UsuarioController : Controller
+{
+    public IActionResult Index() => View();
+}
+
+Se quiser que apareça algumas coisas do banco de dados, podemos colocar o dbContex:
+
+namespace web.Controllers;
+
+public class UsuarioController : Controller
+{
+    private readonly ApplicationDbContext _dbContext;
+    
+    public UsuarioController(ApplicationDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+    public IActionResult Index() => View(_dbContext.Usuarios.ToList());
+
+}
+Criando uma ação resultando em uma renderização do banco no código acima
+
+Colocar um dbSet no applicationDbContext com esse código:
+
+namespace Data;
+
+public class ApplicationDbContext : BaseDbContext
+{
+    public ApplicationDbContext(AppSettings AppSettings) : base(appSettings, "Application")
+    {
+        
+    }
+
+    public DbSet<Usuario> Usuarios { get; set; }
+} Isso quer dizer que nós queremos usar a tabela de usuario.
+
+O código abaixo nós colocamos na view para renderizar: 
+
+@model IEnumerable<Usuario>
+@foreach (var item in Model)
+{
+    <div>
+        @item.Apelido
+    </div>
+}
