@@ -9,7 +9,7 @@ public class UsuarioService : IUsuarioService
 {
     private readonly IAlunoRepository _alunoRepository;
 
-    public UusuarioService(IAlunoRepository alunoRepository)
+    public UsuarioService(IAlunoRepository alunoRepository)
     {
         _alunoRepository = alunoRepository;
     }
@@ -17,7 +17,7 @@ public class UsuarioService : IUsuarioService
     public async Task<IEnumerable<Aluno>> BuscarAluno() => await _alunoRepository BuscarAluno();
 }
 
-Nesse códig um usuarioService esta chamando um Repository de aluno, que é o Repository que a gente quer usar.
+Nesse código um usuarioService esta chamando um Repository de aluno, que é o Repository que a gente quer usar.
 Explicação do código: nele nós estamos chamando o repositorio de aluno na interface IAlunoRepository e ele ta fazendo uma leitura privada do _dbContext
 
 Dentro da pasta core criamos uma pasta interfaces, dentro dela criamos uma pasta Repositories e dentro dela temos o IAlunoRepository.cs com o seguinte código abaixo:
@@ -33,3 +33,31 @@ Agora essa interface IAlunoRepository ela vai trazer uma Task de IEnumerable
 Agora que nós fizemos isso, precisamos ir na injeção de dependencias que fica la no web e digitar o seguinte código:
 
 services.AddScoped<IUsuarioService>(); 
+
+Nós temos uma interface de Repositorio, uma interface de Service.
+Faremos agr a injeção de dependencia primeiro para não esquecer, com o seguinte código:
+
+services.AddScoped<IAlunoService, AlunoService>();
+
+Vamos passar a responsabilidade para AlunoService 
+
+Vamos criar uma interface dentro da pasta Core e dentro da pasta Service chamada IAlunoService
+E lembrando que a interface são as regras ou contatos que a classe de serviço vai precisar de seguir, basicamente a gente coloca os métodos que são nescessários aqui
+
+Agora nós vamos criar o service mesmo de Aluno chamado AlunoService.
+Ao invés de ele chamar o banco, ele vai chamar o Repositório que é o banco com o seguinte código:
+
+namespace Core.Services;
+
+public class AlunoService : IAlunoService
+{
+    private readonly IAlunoRepository _alunoRepository;
+
+    public AlunoService(IAlunoRepository alunoRepository)
+    {
+        _alunoRepository = alunoRepository;
+    }
+
+    public async Task<IEnumerable<Aluno>> BuscarAlunos() => _alunoRepository BuscarAlunos(); 
+}
+ 

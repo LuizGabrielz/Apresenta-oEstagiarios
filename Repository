@@ -170,3 +170,4 @@ namespace Data.Repositories
     public IEnumerable<Aluno> BuscarAlunos() => _dbContext.Alunos.ToList().Where(x => x.Id == 2);
   }
 } 
+ 
